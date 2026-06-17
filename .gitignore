@@ -1,0 +1,10 @@
+# Arquivos de compilação
+*.o
+teste_intersec
+
+# Arquivos do sistema e IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
