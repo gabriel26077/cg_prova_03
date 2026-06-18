@@ -1,63 +1,55 @@
 #include "./elementos_de_cg.h"
 #include <stdio.h>
+
 #include <math.h>
 
-void print_teste(const char* descricao, vetor_3D_t origem, vetor_3D_t direcao, esfera_t esfera) {
-    printf("==================================================\n");
-    printf("TESTE: %s\n", descricao);
-    printf("Esfera: Centro = (%.2f, %.2f, %.2f), Raio = %.2f\n", 
-           esfera.origem.x, esfera.origem.y, esfera.origem.z, esfera.raio);
-    printf("Raio:   Origem = (%.2f, %.2f, %.2f), Direcao = (%.2f, %.2f, %.2f)\n", 
-           origem.x, origem.y, origem.z, direcao.x, direcao.y, direcao.z);
-    
-    interseccoes_t inters = intersec_raio_esfera(origem, direcao, esfera);
-    
-    printf("Resultados: Qtd Intersecoes = %d\n", inters.qtd);
-    for (int i = 0; i < inters.qtd; i++) {
-        printf("  Ponto %d: (%.4f, %.4f, %.4f)\n", 
-               i + 1, inters.vetores[i].x, inters.vetores[i].y, inters.vetores[i].z);
-    }
-    printf("==================================================\n\n");
-}
+
 
 int main() {
-    printf("Executando testes para intersec_raio_esfera...\n\n");
 
-    // Esfera comum para os testes na origem (0,0,0) com raio 2.0
-    esfera_t esfera = {
-        .origem = { .x = 0.0f, .y = 0.0f, .z = 0.0f },
-        .raio = 2.0f,
-        .cor = { .r = 1.0f, .g = 0.0f, .b = 0.0f }
+    frame_buffer_rgb_t frame_buffer = init_frame_buffer(40, 40);
+
+    camera_t camera = camera_init((camera_init_params) {
+        .look_from = (vetor_3D_t) {.x = 0, .y=0, .z =0},
+        .look_at = (vetor_3D_t) {.x = 0, .y=0, .z = -1},
+        .up = (vetor_3D_t) {.x = 0, .y=1, .z = 0},
+
+        .plano_de_proj_w = 1,
+        .plano_de_proj_h = 1,
+        .distancia_focal = 1
+    });
+
+
+    esfera_t esfera = (esfera_t) {
+        .origem = (vetor_3D_t) {.x = -1.0, .y = -1.0, .z = -10.0},
+        .raio = 2,
+        .cor = (RGB_t) {.r = 1.0, 0.0, 0.0}
     };
 
-    // Caso 1: O raio aponta direto para o centro da esfera, cruzando-a (espera-se 2 interseções)
-    vetor_3D_t origem_1 = { .x = 0.0f, .y = 0.0f, .z = 5.0f };
-    vetor_3D_t direcao_1 = { .x = 0.0f, .y = 0.0f, .z = -1.0f };
-    print_teste("Raio atravessando a esfera pelo centro (2 intersecoes esperadas)", 
-                origem_1, direcao_1, esfera);
-
-    // Caso 2: O raio passa raspando (tangente) na borda da esfera (espera-se 1 interseção)
-    vetor_3D_t origem_2 = { .x = 2.0f, .y = 0.0f, .z = 5.0f };
-    vetor_3D_t direcao_2 = { .x = 0.0f, .y = 0.0f, .z = -1.0f };
-    print_teste("Raio tangente a esfera (1 intersecao esperada)", 
-                origem_2, direcao_2, esfera);
-
-    // Caso 3: O raio erra completamente a esfera (espera-se 0 interseções)
-    vetor_3D_t origem_3 = { .x = 3.0f, .y = 0.0f, .z = 5.0f };
-    vetor_3D_t direcao_3 = { .x = 0.0f, .y = 0.0f, .z = -1.0f };
-    print_teste("Raio que erra a esfera completamente (0 intersecoes esperadas)", 
-                origem_3, direcao_3, esfera);
-
-    // Caso 4: Esfera deslocada para (10, 10, 10), raio de 5.0, e raio passando pelo centro
-    esfera_t esfera_deslocada = {
-        .origem = { .x = 10.0f, .y = 10.0f, .z = 10.0f },
-        .raio = 5.0f,
-        .cor = { .r = 0.0f, .g = 1.0f, .b = 0.0f }
+    luz_t luz = (luz_t) {
+        .pos = (vetor_3D_t) {.x = 3.0, .y = 3.0, .z = -2.5},
+        .cor = (RGB_t) {.r = 1.0, .g = 1.0, .b = 1.0}
     };
-    vetor_3D_t origem_4 = { .x = 10.0f, .y = 10.0f, .z = 0.0f };
-    vetor_3D_t direcao_4 = { .x = 0.0f, .y = 0.0f, .z = 1.0f };
-    print_teste("Esfera deslocada em (10,10,10) - Raio pelo centro (2 intersecoes esperadas)", 
-                origem_4, direcao_4, esfera_deslocada);
 
-    return 0;
+    printf("origem da camera:\n");
+    vetor_3D_print(camera.look_from);
+
+    printf("xyz da base da camera:\n");
+    vetor_3D_print(camera.x_base);
+    vetor_3D_print(camera.y_base);
+    vetor_3D_print(camera.z_base);
+
+
+
+    vetor_3D_t look_from_look_at_ = vetor_3D_escala(camera.z_base, -1);
+    printf("vetor direção do olho da camera\n");
+    vetor_3D_print(look_from_look_at_);
+
+    printf("origem da esfera\n");
+    vetor_3D_print(esfera.origem);
+
+    interseccoes_t intersecs = intersec_raio_esfera(camera.look_from, look_from_look_at_, esfera);
+
+    printf("qtd de intersecs: %d", intersecs.qtd);
+    renderiza_esfera(camera, esfera, luz, frame_buffer);
 }

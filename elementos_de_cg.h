@@ -9,16 +9,16 @@ typedef struct vetor_3D_t {
     float z;
 } vetor_3D_t;
 
-typedef struct cor_t {
+typedef struct RGB_t {
     float r;
     float g;
     float b;
-} cor_t;
+} RGB_t;
 
 typedef struct esfera_t {
     vetor_3D_t origem;
     float raio;
-    cor_t cor;
+    RGB_t cor;
 } esfera_t;
 
 
@@ -28,6 +28,52 @@ typedef struct interseccoes_t {
 } interseccoes_t;
 
 
+typedef struct camera_t {
+
+    //dados definidos pelo usuário
+    vetor_3D_t look_from;
+    vetor_3D_t look_at;
+    vetor_3D_t up;
+    float plano_de_proj_w;
+    float plano_de_proj_h;
+    
+    float distancia_focal;
+
+    //
+
+    // vetores de base calulados
+    // posteriormente
+    vetor_3D_t x_base;
+    vetor_3D_t y_base;
+    vetor_3D_t z_base;
+} camera_t;
+
+typedef struct camera_init_params {
+    vetor_3D_t look_from;
+    vetor_3D_t look_at;
+    vetor_3D_t up;
+    float plano_de_proj_w;
+    float plano_de_proj_h;
+    float distancia_focal;
+}camera_init_params;
+
+camera_t camera_init(camera_init_params params);
+
+
+typedef struct luz_t {
+    vetor_3D_t pos;
+    RGB_t  cor;
+} luz_t;
+
+
+
+typedef struct frame_buffer_rgb_t {
+    RGB_t* BUFFER;
+    int width;
+    int height;
+} frame_buffer_rgb_t;
+
+frame_buffer_rgb_t init_frame_buffer(int width, int height);
 
 // retorna v1 + v2
 vetor_3D_t vetor_3D_soma(vetor_3D_t v1, vetor_3D_t v2);
@@ -60,6 +106,7 @@ void vetor_3D_print(vetor_3D_t v);
 
 interseccoes_t intersec_raio_esfera(vetor_3D_t origem_raio, vetor_3D_t direcao, esfera_t esfera);
 
+void renderiza_esfera(camera_t camera, esfera_t esfera, luz_t fonte_de_luz, frame_buffer_rgb_t buffer);
 
 
 #endif
