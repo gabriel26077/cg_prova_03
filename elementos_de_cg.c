@@ -164,7 +164,7 @@ frame_buffer_rgb_t init_frame_buffer(int width, int height) {
     };
 }
 
-void renderiza_esfera(camera_t camera, esfera_t esfera, luz_t fonte_de_luz, frame_buffer_rgb_t buffer) {
+void renderiza_esfera(camera_t camera, esfera_t esfera, luz_t luz, RGB_t luz_ambiente,  frame_buffer_rgb_t buffer) {
     int _PX_W = buffer.width;
     int _PX_H = buffer.height;
 
@@ -178,7 +178,7 @@ void renderiza_esfera(camera_t camera, esfera_t esfera, luz_t fonte_de_luz, fram
     vetor_3D_t look_d = vetor_3D_escala(camera.z_base, camera.distancia_focal);
     look_d = vetor_3D_escala(look_d, -1);
 
-    printf("\niniciando\n");
+
     for(int i = 0; i < _PX_W; i++) {
         for(int j = 0; j < _PX_H; j++) {
             
@@ -198,9 +198,63 @@ void renderiza_esfera(camera_t camera, esfera_t esfera, luz_t fonte_de_luz, fram
 
             interseccoes_t intersecs = intersec_raio_esfera(camera.look_from, raio_direcao, esfera);
 
-            printf("%s", intersecs.qtd > 0? ". " :"# ");
+            if( intersecs.qtd > 0) {
+
+                vetor_3D_t ponto_intersec = intersecs.vetores[0];
+                vetor_3D_t origem_observador = camera.look_from; // poderia pegar dinamicamente
+
+
+                // --- 1. GEOMETRIA (Cálculo dos Vetores Unitários) ---
+                vetor_3D_t O = vetor_3D_subtrai(origem_observador, ponto_intersec);
+                O = vetor_3D_versor(O);
+
+                vetor_3D_t N = vetor_3D_subtrai(ponto_intersec, esfera.origem);
+                N = vetor_3D_versor(N);
+
+                vetor_3D_t L = vetor_3D_subtrai(luz.origem, ponto_intersec);
+                L = vetor_3D_versor(L);
+
+
+                // --- 2. CÁLCULO DO VETOR DE REFLEXÃO R ---
+                float dot_NL = vetor_3D_produto_escalar(N, L);
+                if (dot_NL < 0.0) dot_NL = 0.0;
+                vetor_3D_t N_escalado = vetor_3D_escala(N, 2.0 * dot_NL);
+                vetor_3D_t R = vetor_3D_subtrai(N_escalado, L);
+                R = vetor_3D_versor(R);
+
+                //Agora temos O N L R
+
+
+                // --- 3. CÁLCULO DO FATOR ESPECULAR (De onde ele vem!) ---
+                float dot_RO = vetor_3D_produto_escalar(R, O);
+                if (dot_RO < 0.0) dot_RO = 0.0;
+                float fator_especular = pow(dot_RO, esfera.material.n);
+
+
+                RGB_t cor_final;
+
+                float termo_difuso_r = esfera.material.kd.r * dot_NL;
+                float termo_especular_r = esfera.material.ks.r * fator_especular;
+                cor_final.r = (luz_ambiente.r * esfera.material.ka.r) + luz.cor.r * (termo_difuso_r + termo_especular_r);
+
+                float termo_difuso_g = esfera.material.kd.g * dot_NL;
+                float termo_especular_g = esfera.material.ks.g * fator_especular;
+                cor_final.g = (luz_ambiente.g * esfera.material.ka.g) + luz.cor.g * (termo_difuso_g + termo_especular_g);
+
+
+
+                float termo_difuso_b = esfera.material.kd.b * dot_NL;
+                float termo_especular_b = esfera.material.ks.b * fator_especular;
+                cor_final.b = (luz_ambiente.b * esfera.material.ka.b) + luz.cor.b * (termo_difuso_b + termo_especular_b);
+
+                if(cor_final.r > 1.0) cor_final.r = 1.0;
+                if(cor_final.g > 1.0) cor_final.g = 1.0;
+                if(cor_final.b > 1.0) cor_final.b = 1.0;
+
+
+                buffer.BUFFER[i*buffer.width + j] = cor_final;
+            }
         }
-        printf("\n");
     }
 
 }

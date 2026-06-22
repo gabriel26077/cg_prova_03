@@ -1,6 +1,8 @@
 #ifndef ALGELIN_H
 #define ALGELIN_H
 
+#include "shared.h"
+
 #define BUFFER_INTERSECCOES_SIZE 12
 
 typedef struct vetor_3D_t {
@@ -9,16 +11,19 @@ typedef struct vetor_3D_t {
     float z;
 } vetor_3D_t;
 
-typedef struct RGB_t {
-    float r;
-    float g;
-    float b;
-} RGB_t;
+
+typedef struct material_t {
+    RGB_t ka;  // Coeficiente/cor ambiente (como o objeto reflete a luz de fundo)
+    RGB_t kd;  // Coeficiente/cor difusa (a cor "base" ou "cor de giz" do objeto)
+    RGB_t ks;  // Coeficiente/cor especular (o brilho, geralmente branco [1,1,1] ou cinza)
+    float n;   // Expoente especular (shininess / polimento)
+} material_t;
+
 
 typedef struct esfera_t {
     vetor_3D_t origem;
     float raio;
-    RGB_t cor;
+    material_t material;
 } esfera_t;
 
 
@@ -61,7 +66,7 @@ camera_t camera_init(camera_init_params params);
 
 
 typedef struct luz_t {
-    vetor_3D_t pos;
+    vetor_3D_t origem;
     RGB_t  cor;
 } luz_t;
 
@@ -106,7 +111,7 @@ void vetor_3D_print(vetor_3D_t v);
 
 interseccoes_t intersec_raio_esfera(vetor_3D_t origem_raio, vetor_3D_t direcao, esfera_t esfera);
 
-void renderiza_esfera(camera_t camera, esfera_t esfera, luz_t fonte_de_luz, frame_buffer_rgb_t buffer);
+void renderiza_esfera(camera_t camera, esfera_t esfera, luz_t luz,  RGB_t luz_ambiente, frame_buffer_rgb_t buffer);
 
 
 #endif
